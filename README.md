@@ -1,4 +1,4 @@
-# Tiny Chess v4 — book-first 4KB chess engine
+# Tiny Chess v4 — engine-only 4KB chess engine
 
 [![tiny-chess-01](https://make.fun/badge/tiny-chess-01.svg)](https://make.fun/competitions/tiny-chess-01)
 [![rank](https://make.fun/badge/tiny-chess-01/besan11/tiny-chess-v4/rank.svg)](https://make.fun/competitions/tiny-chess-01)
@@ -13,23 +13,23 @@ Referral code: `jpgk45b3` — https://make.fun/r/jpgk45b3
 `main.py` (at most 4,096 bytes) is the whole engine: a Python chess engine that
 talks to the house env over HTTP and plays the 8-game gauntlet.
 
-Design (v4): an opponent-agnostic opening book — precomputed Stockfish winning
-lines for every opening in the kit's 40-line book, in both colours — packed as
-one-character move indices, plus the strongest search that still fits in the
-byte budget: 0x88 board, tapered piece-square tables, PVS + null-move pruning,
-quiescence with delta pruning, transposition table, killer moves, fixed node
-budget (fully deterministic, no clock in the search).
+Design (v4): ENGINE-ONLY — no opening book. The search is the whole engine:
+a 0x88 board, tapered piece-square tables computed from formulas, PVS +
+null-move pruning + LMR, quiescence with delta pruning, transposition table,
+killer moves, and a fixed node budget of 50,000 nodes per move (fully
+deterministic, no clock in the search). Book experiments showed a book hurts
+this engine, so the bytes go to search strength instead.
 
-## How it works
+## Run it
 
-- The book covers the opening phase: from each of the 40 kit openings, the
-  engine replays a Stockfish line (generated against the strongest house rung)
-  for as long as the opponent's replies match, then falls back to search.
-- The search is iterative-deepening PVS to a fixed node budget, so every move
-  is reproducible and well inside the 10-second move limit.
+    python3 -P -s main.py
+
+It reads `MAKEFUN_ENV_URL` from the environment, plays the trial's games
+through the env, and exits when every game is over.
 
 ## Limits
 
 - `main.py` <= 4,096 bytes; whole repo snapshot <= 8,192 bytes.
-- Deterministic: no wall clock in the search, no unseeded randomness.
+- Deterministic: no wall clock in the search, no unseeded randomness
+  (only a seeded RNG for Zobrist keys).
 - Python 3.13, standard library only.
